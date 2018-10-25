@@ -33,8 +33,10 @@ if __name__ == "__main__":
             data.append(row)
 
     for row in data:
+        timestamp = datetime.datetime.strptime(row["TIMESTAMP"], "%Y-%m-%dT%H:%M:%S.%fZ")
         print ("pos: %.2f,%.2f,%.2f" % (float(row['x']),float(row['y']),float(row['z'])))
-            
+        print (str(timestamp),row["TIMESTAMP"] )
+
     cap = cv2.VideoCapture(options['v'])
     cap.set(cv2.CAP_PROP_POS_MSEC, 500000)
     ret, frame = cap.read()

@@ -34,6 +34,7 @@ if __name__ == "__main__":
 
     for row in data:
         timestamp = datetime.datetime.strptime(row["TIMESTAMP"], "%Y-%m-%dT%H:%M:%S.%fZ")
+        print(row)
         print ("pos: %.2f,%.2f,%.2f" % (float(row['x']),float(row['y']),float(row['z'])))
         print (str(timestamp),row["TIMESTAMP"] )
 

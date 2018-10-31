@@ -6,20 +6,13 @@ def unit_vector(vector):
 
 def angle_between(v1, v2):
     """ Returns the angle in radians between vectors 'v1' and 'v2'::
-
-            >>> angle_between((1, 0, 0), (0, 1, 0))
-            1.5707963267948966
-            >>> angle_between((1, 0, 0), (1, 0, 0))
-            0.0
-            >>> angle_between((1, 0, 0), (-1, 0, 0))
-            3.141592653589793
     """
     v1_u = unit_vector(v1)
     v2_u = unit_vector(v2)
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
 def get_transformation_matrix_3D(ax1:np.ndarray ,ax2:np.ndarray):
-    """ Returns the tranformation matrix q between two two sets of three dimensional coordinate systems.
+    """ Returns the tranformation matrix q between two sets of three dimensional coordinate systems.
 
     """
     if not isinstance(ax1, np.ndarray) or not isinstance(ax2, np.ndarray):
@@ -75,5 +68,14 @@ if __name__ == "__main__":
     print("world velocity v_world: ", v_world )
     print("Transform v_world  with Q2: ", Q2 @ v_world)
     print("Transform v_world  with Q2^T: ", Q2_t @ v_world)
+
+    ax3 = np.array([[0,-1,0],[-1,0,0],[0,0,1]])
+    Q3 = get_transformation_matrix_3D(ax1, ax3)
+    Q3_t = np.transpose(Q3)
+    v_forward = np.array([1,0,0])
+
+    print("Original forward: ", v_forward)
+    print("Q3: \n", Q3)
+    print("Q3^T @ forward ", Q3_t @ v_forward)
 
 

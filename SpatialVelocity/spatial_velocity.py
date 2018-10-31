@@ -38,7 +38,7 @@ if __name__ == "__main__":
         print (str(timestamp),row["TIMESTAMP"] )
 
     cap = cv2.VideoCapture(options['v'])
-    cap.set(cv2.CAP_PROP_POS_MSEC, 500000)
+    cap.set(cv2.CAP_PROP_POS_MSEC, 1000)
     ret, frame = cap.read()
     cv2.imwrite('frame.png', frame)
     cap.release()

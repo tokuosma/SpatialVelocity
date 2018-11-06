@@ -12,13 +12,21 @@ def angle_between(v1, v2):
     return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
 def get_transformation_matrix_3D(ax1:np.ndarray ,ax2:np.ndarray):
-    """ Returns the tranformation matrix q between two sets of three dimensional coordinate systems.
+    """ Returns the tranformation matrix Q between two sets of three dimensional coordinate systems.
+        A vector represented in ax1 can be translated ax2 by multiplying it with Q.
+
+    Args:
+        ax1 (numpy.ndarray): 3x3 numpy ndarray containing the coordinate axises of the original coordinate system
+        ax2 (numpy.ndarray): 3x3 numpy ndarray containing the second set of coordinate axises
+
+    Returns:
+        numpy.ndarray: The transformation matrix Q
 
     """
     if not isinstance(ax1, np.ndarray) or not isinstance(ax2, np.ndarray):
         print("Error! Coordinates must be given as a 3x3 numpy.ndarray")
         raise ValueError
-    if(ax1.shape != ax2.shape != (3,3)):
+    if(ax1.shape != (3,3) or ax2.shape != (3,3)):
         print("Error! Array shape must be 3x3")
         raise ValueError
 
@@ -29,7 +37,7 @@ def get_transformation_matrix_3D(ax1:np.ndarray ,ax2:np.ndarray):
             v2_u = unit_vector(ax2[j])
             matrix[i][j] = np.dot(v1_u, v2_u)
 
-    return matrix
+    return np.transpose(matrix)
     
 
 if __name__ == "__main__":

@@ -1,8 +1,10 @@
 import unittest
 import numpy as np
-from ..vector_util import get_transformation_matrix_3D
-from ..vector_util import angle_between
-from ..vector_util import unit_vector
+import sys
+sys.path.append("../")
+from SpatialVelocity.vector_util import get_transformation_matrix_3D
+from SpatialVelocity.vector_util import angle_between
+from SpatialVelocity.vector_util import unit_vector
 
 
 class TestVectorUtility(unittest.TestCase):
@@ -14,7 +16,7 @@ class TestVectorUtility(unittest.TestCase):
         uvec = unit_vector(vec)
         self.assertTrue(np.equal(np.array([1,0,0]),uvec).all())
 
-    def test_angle_betwee(self):
+    def test_angle_between(self):
         vec1 = np.array([1,0,0])
         vec2 = np.array([0,1,0])
 

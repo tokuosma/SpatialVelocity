@@ -1,60 +1,58 @@
 import numpy as np
 import datetime
 import cv2
+import csv
 import sys
-from sv_data_row import SpatialVelocityDataRow
+from typing import Dict, List
+from .sv_data_row import SpatialVelocityDataRow
+from .vector_util import get_transformation_matrix_3D
 
-option_handle_list = ['--csv', '--v', '--o']
-options = {}
+# Standard world coordinate axises
+STD_AXIS = np.array([[1,0,0],[0,1,0],[0,0,1]])
 
-if __name__ == "__main__":
+def get_pc_velocities(sv_data_rows:List[SpatialVelocityDataRow]):
+    """ Returns a np array of velocities in the player centered coordinate system from list of data rows.
+        Each velocity is calculated from two successive entries in the sv_data_rows and transformed to 
+        the player centered coordinate system.  
 
+        Args:
+            sv_data_rows (:obj:'list' of :obj:'SpatialVelocityDataRow'): List of spatial velocity data rows
 
-    for option_handle in option_handle_list:
-        options[option_handle[2:]] = sys.argv[sys.argv.index(option_handle) + 1] if option_handle in sys.argv else None
+        Returns:
+            np.ndarray: Array of the player centered velocities
+    """
+    pc_velocities = []
+    for i in range(1, len(sv_data_rows)):
+        d_pos = sv_data_rows[i].wpos -  sv_data_rows[i - 1].wpos # calculate wpos displacement
+        d_time = (sv_data_rows[i].timestamp -  sv_data_rows[i - 1].timestamp) # calculate time difference
+        w_velocity = d_pos/(d_time.total_seconds()) # calculate average velocity
 
-    if options['csv'] ==  None:
-        print("No csv path given")
-        exit(1)
-
-    if options['v'] ==  None:
-        print("No video path given")
-        exit(1)
-
-    if options['o'] == None:
-        print("No output path given")
-
-    raw_data = []
-    import csv
-    with open(options['csv']) as csvfile:
-        dialect = csv.Sniffer().sniff(csvfile.read(5000))
-        csvfile.seek(0)
-        reader = csv.DictReader(csvfile,dialect=dialect)
-        for row in reader:
-            raw_data.append(row)
-
-    data_rows = []
-    for row in raw_data:
-        data_row = SpatialVelocityDataRow(
-            row['x'], row['y'], row['z'],
-            row['r'], row['p'], row['yw'],
-            row['u_x'], row['u_y'], row['u_z'],
-            row['f_x'], row['f_y'], row['f_z'],
-            row['FPS'],  row['TIMESTAMP']
+        # Calculate the transformation matrix for transforming the velocity to player centered coordinates
+        Q = get_transformation_matrix_3D(
+            STD_AXIS,
+            np.array([sv_data_rows[i].forward, sv_data_rows[i].right, sv_data_rows[i].up]) 
         )
-        print(data_row.timestamp)
-        data_rows.append([data_row])
-        
-        # timestamp = datetime.datetime.strptime(row["TIMESTAMP"], "%Y-%m-%dT%H:%M:%S.%fZ")
-        # print(row)
-        # print ("pos: %.2f,%.2f,%.2f" % (float(row['x']),float(row['y']),float(row['z'])))
-        # print (str(timestamp),row["TIMESTAMP"] )
 
-    cap = cv2.VideoCapture(options['v'])
-    cap.set(cv2.CAP_PROP_POS_MSEC, 1000)
-    ret, frame = cap.read()
-    cv2.imwrite('frame.png', frame)
-    cap.release()
-    cv2.destroyAllWindows()
+        pc_velocity = Q @ w_velocity
+        pc_velocities.append(pc_velocity)
+    return np.array(pc_velocities)
 
+def get_rotation_speeds(sv_data_rows:List[SpatialVelocityDataRow]):
+    """ Returns a np array of average rotation speed from list of data rows.
+        Each rotation speed is calculated from two successive entries in the sv_data_rows.
 
+        Args:
+            sv_data_rows (:obj:'list' of :obj:'SpatialVelocityDataRow'): List of spatial velocity data rows
+
+        Returns:
+            np.ndarray: Array of the player centered velocities
+    """
+    rot_velocities = []
+    for i in range(1, len(sv_data_rows)):
+        d_rot = sv_data_rows[i].rot -  sv_data_rows[i - 1].rot
+        d_time = (sv_data_rows[i].timestamp -  sv_data_rows[i - 1].timestamp)
+        rot_velocities.append(d_rot/(d_time.total_seconds()))
+    return np.array(rot_velocities)
+
+def calculate_row_rms(array:np.ndarray):
+    return np.sqrt(np.mean(np.square(array), axis=0))

@@ -3,7 +3,9 @@ import datetime
 import cv2
 import csv
 import sys
+from pathlib import Path
 from typing import Dict, List
+
 from SpatialVelocity import SpatialVelocityDataRow
 from SpatialVelocity.spatial_velocity import get_pc_velocities
 from SpatialVelocity.spatial_velocity import calculate_row_rms
@@ -21,6 +23,21 @@ OUTPUT_PATH = "./Output"
 #:int: Logging start time in the video file [ms]
 LOG_START_TIME = 0
 
+def make_dir(path):
+    new_path = Path(path)
+    if(new_path.exists()):
+        return path
+    else:
+        new_path.mkdir(parents=True)
+    # elif(new_path.parent.is_dir()):
+    #     new_path.mkdir()
+    # else:
+    #     make_dir(new_path.parent)
+    #     new_path.mkdir()
+    
+
+
+
 if __name__ == "__main__":
 
     for option_handle in option_handle_list:
@@ -37,7 +54,12 @@ if __name__ == "__main__":
         VIDEO_PATH = options['v'] 
 
     if options['o'] != None:
-        OUTPUT_PATH = options['o']
+        try:
+            OUTPUT_PATH = options['o']
+            make_dir(OUTPUT_PATH)
+        except:
+            print("Invalid output directory given.")
+            exit(1)
 
     if options['lstart'] != None:
         try:
@@ -98,7 +120,8 @@ if __name__ == "__main__":
         video_time = LOG_START_TIME + 1000 * (data_set[-1].timestamp - start_timestamp).total_seconds()
         cap.set(cv2.CAP_PROP_POS_MSEC, video_time)
         ret, frame = cap.read()
-        cv2.imwrite('frame%d.png' % i, frame)
+        print( OUTPUT_PATH +'frame%d.png' % i)
+        cv2.imwrite( OUTPUT_PATH  + 'frame%d.png' % i, frame)
     
     cap.release()
     cv2.destroyAllWindows()

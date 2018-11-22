@@ -6,6 +6,8 @@ import sys
 from typing import Dict, List
 from .sv_data_row import SpatialVelocityDataRow
 from .vector_util import get_transformation_matrix_3D
+from scipy.signal import welch
+
 
 # Standard world coordinate axises
 STD_AXIS = np.array([[1,0,0],[0,1,0],[0,0,1]])
@@ -52,7 +54,39 @@ def get_rotation_speeds(sv_data_rows:List[SpatialVelocityDataRow]):
         d_rot = sv_data_rows[i].rot -  sv_data_rows[i - 1].rot
         d_time = (sv_data_rows[i].timestamp -  sv_data_rows[i - 1].timestamp)
         rot_velocities.append(d_rot/(d_time.total_seconds()))
+        # print (rot_velocities)
     return np.array(rot_velocities)
+
+def get_avg_row_SF(image, window = 'hanning', nfft = 256):
+    """ Calculates the SF for each row in image and returns the average spatial frequency
+
+        Args:
+            image : Source image (grayscale)
+            window (str,optional): Desired window to use
+            nfft (int,optional): Fourier transform size
+
+        Returns:
+            float: Average row SF value for image   
+    """
+    row_frqs = []
+    for i in range(image.shape[0]):
+        # Calculate row power spectral density using Welch's method
+        f, psd = welch( image[i],
+            window=window,
+            nperseg=nfft,
+            nfft=nfft
+        )
+        if psd.all() == 0:
+            # Skip rows with no intensity variation
+            row_frqs.append(0) 
+            continue
+
+        # Calculate the spatial frequency according to power spectral density distribution
+        mean_f = np.average(f, weights=psd)
+        row_frqs.append(mean_f)
+        
+    avg_row_sf = np.average(np.array(row_frqs)) 
+    return avg_row_sf
 
 def calculate_row_rms(array:np.ndarray):
     return np.sqrt(np.mean(np.square(array), axis=0))

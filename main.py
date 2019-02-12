@@ -4,13 +4,12 @@ import datetime
 import cv2
 import csv
 import sys
+
 from pathlib import Path
 from typing import Dict, List
-
-
 from SpatialVelocity import SpatialVelocityDataRow
 from SpatialVelocity.spatial_velocity import get_pc_velocities
-from SpatialVelocity.spatial_velocity import calculate_row_rms
+from SpatialVelocity.spatial_velocity import calculate_col_rms
 from SpatialVelocity.spatial_velocity import get_rotation_speeds
 from SpatialVelocity.spatial_velocity import get_avg_row_SF
 
@@ -19,25 +18,18 @@ options = {}
 
 #:str: Path to the video file
 VIDEO_PATH = ""
-#:int: How many log file rows are handled before capturing a screenshot from the video
+#:int: How many log file rows are averaged per each screenshot captured from the video
 STEP_SIZE = 2
 #:str: Determines where the output will be saved 
 OUTPUT_PATH = "./Output"
 #:int: Logging start time in the video file [ms]
 LOG_START_TIME = 0
-#:int: Field of view for scene camera 
-FOV = 90
 #:float: Aspect ratio (width/height) for scene camera
 ASPECT_RATIO = 1.777
 #:bool: If set to true, displays each screenshot during processing
 SHOW_IMAGES = False
 #:bool: If set to true, each image processed is saved to output folder
 SAVE_IMAGES = False
-
-def find_nearest(array, value):
-    array = np.asarray(array)
-    idx = (np.abs(array - value)).argmin()
-    return idx
 
 def make_dir(path):
     new_path = Path(path)
@@ -47,6 +39,14 @@ def make_dir(path):
         new_path.mkdir(parents=True)
 
 if __name__ == "__main__":
+    """ Calculates spatial velocities.
+
+        For details, see: 
+            So, R. H., Ho, A., & Lo, W. T. (2001).
+            A metric to quantify virtual scene movement for the study of cybersickness: Definition, implementation, and verification. 
+            Presence: Teleoperators & Virtual Environments, 10(2), 193-215.
+
+    """
 
     for option_handle in option_handle_list:
         options[option_handle[2:]] = sys.argv[sys.argv.index(option_handle) + 1] if option_handle in sys.argv else None
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     if options['saveimg'] != None:
         SAVE_IMAGES = True
     
-    # Read data from csv
+    # Read data from log file
     data_rows = []
     with open(options['csv']) as csvfile:
         try:
@@ -113,8 +113,7 @@ if __name__ == "__main__":
             print(".csv file could not be read: %s" % str(e))
             print("Exiting...")
             exit(1)
-
-
+    
     # open video file
     cap = cv2.VideoCapture(VIDEO_PATH)
     # First timestamp 
@@ -130,9 +129,9 @@ if __name__ == "__main__":
         data_set = data_rows[i:i+ STEP_SIZE]
         # Calculate step rms velocities and rotations
         pc_velocities = get_pc_velocities(data_set)
-        rms_pc_velocities = calculate_row_rms(pc_velocities)
+        rms_pc_velocities = calculate_col_rms(pc_velocities)
         rotations = get_rotation_speeds(data_set)
-        rms_rotations = calculate_row_rms(rotations)
+        rms_rotations = calculate_col_rms(rotations)
 
         # All velocities
         V = np.array([rms_pc_velocities, rms_rotations]).transpose()
@@ -140,12 +139,16 @@ if __name__ == "__main__":
         # Move video to the current timestamp
         video_time = LOG_START_TIME + 1000 * (data_set[-1].timestamp - START_TIMESTAMP).total_seconds()
         cap.set(cv2.CAP_PROP_POS_MSEC, video_time)
+        
+        # Read frame
         ret, frame = cap.read()
 
         if(np.shape(frame) == ()):
+            # Stop run if no frame could be read
             print("Video end.")
             break
-        # Get grayscale screenshot from video
+
+        # Convert to grayscale
         image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) 
 
         if(SHOW_IMAGES):
@@ -169,10 +172,14 @@ if __name__ == "__main__":
         #Calculate radial SF
         avg_rad_sf = np.sqrt(avg_col_sf ** 2 + avg_row_sf ** 2)
 
-        # Calculate spatial velocities
-        sv_x = avg_rad_sf * V[0][0]
+        # Calculate spatial velocities:
+        #                       | V_X V_R  |
+        #   [SF_R SF_H SF_V] X  | V_Y V_Yw |
+        #                       | V_Z V_p  |
+    
+        sv_x = avg_rad_sf * V[0][0] 
         sv_roll = avg_rad_sf * V[0][1]
-        sv_y = avg_row_sf * V[1][0]
+        sv_y = avg_row_sf * V[1][0] 
         sv_pitch = avg_row_sf * V[1][1]
         sv_z = avg_col_sf * V[2][0]
         sv_yaw = avg_col_sf * V[2][1]

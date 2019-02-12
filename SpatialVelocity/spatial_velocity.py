@@ -9,7 +9,7 @@ from .vector_util import get_transformation_matrix_3D
 from scipy.signal import welch
 
 
-# Standard world coordinate axises
+#:obj:`np.array` Standard world coordinate axises
 STD_AXIS = np.array([[1,0,0],[0,1,0],[0,0,1]])
 
 def get_pc_velocities(sv_data_rows:List[SpatialVelocityDataRow]):
@@ -62,7 +62,7 @@ def get_avg_row_SF(image, window = 'hanning', nfft = 256):
 
         Args:
             image : Source image (grayscale)
-            window (str,optional): Desired window to use
+            window (str,optional): Window function used
             nfft (int,optional): Fourier transform size
 
         Returns:
@@ -71,6 +71,7 @@ def get_avg_row_SF(image, window = 'hanning', nfft = 256):
     row_frqs = []
     for i in range(image.shape[0]):
         # Calculate row power spectral density using Welch's method
+        # See: https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.welch.html
         f, psd = welch( image[i],
             window=window,
             nperseg=nfft,
@@ -81,12 +82,23 @@ def get_avg_row_SF(image, window = 'hanning', nfft = 256):
             row_frqs.append(0) 
             continue
 
-        # Calculate the spatial frequency according to power spectral density distribution
+        # Calculate the dominating spatial frequency of current row. 
+        # The frequency is calculated as the weighted mean of the 
+        # frequencies, using the psd values as weights. 
         mean_f = np.average(f, weights=psd)
         row_frqs.append(mean_f)
         
+    # Calculate the average frequecy across all rows.
     avg_row_sf = np.average(np.array(row_frqs)) 
     return avg_row_sf
 
-def calculate_row_rms(array:np.ndarray):
+def calculate_col_rms(array:np.ndarray):
+    """ Calculate rms value for each column in MxM matrix
+
+        Args:
+            array(:obj:`np.ndarray`): MxM numpy array
+
+        Returns:
+            :obj:`np.ndarray`: Mx1 numpy array, containing the col RMS values
+    """
     return np.sqrt(np.mean(np.square(array), axis=0))

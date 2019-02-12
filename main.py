@@ -141,6 +141,10 @@ if __name__ == "__main__":
         video_time = LOG_START_TIME + 1000 * (data_set[-1].timestamp - START_TIMESTAMP).total_seconds()
         cap.set(cv2.CAP_PROP_POS_MSEC, video_time)
         ret, frame = cap.read()
+
+        if(np.shape(frame) == ()):
+            print("Video end.")
+            break
         # Get grayscale screenshot from video
         image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) 
 
@@ -175,6 +179,7 @@ if __name__ == "__main__":
         SV = np.array([[sv_x, sv_roll], [sv_y, sv_pitch], [sv_z, sv_yaw]])
         SV_dict =  {
             'Timestamp': data_set[-1].timestamp.isoformat(),
+            'TimeDelta': video_time,
             'scene_velocity_x': V[0][0],
             'scene_velocity_y': V[1][0],
             'scene_velocity_z': V[2][0],
@@ -194,8 +199,8 @@ if __name__ == "__main__":
         spatial_velocities.append(SV_dict)
 
     # Write results 
-    with open( Path(OUTPUT_PATH).joinpath('results.csv'), 'w') as csvfile:
-        fieldnames = ['Timestamp',
+    with open( Path(OUTPUT_PATH).joinpath('results.csv'), 'w',  newline='') as csvfile:
+        fieldnames = ['Timestamp','TimeDelta',
         'scene_velocity_x','scene_velocity_y','scene_velocity_z',
         'scene_velocity_roll', 'scene_velocity_pitch', 'scene_velocity_yaw',
         'row_avg_SF','col_avg_SF','rad_avg_SF',

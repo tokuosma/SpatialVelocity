@@ -173,16 +173,13 @@ if __name__ == "__main__":
         avg_rad_sf = np.sqrt(avg_col_sf ** 2 + avg_row_sf ** 2)
 
         # Calculate spatial velocities:
-        #                       | V_X V_R  |
-        #   [SF_R SF_H SF_V] X  | V_Y V_Yw |
-        #                       | V_Z V_p  |
-    
+        
         sv_x = avg_rad_sf * V[0][0] 
         sv_roll = avg_rad_sf * V[0][1]
         sv_y = avg_row_sf * V[1][0] 
-        sv_pitch = avg_row_sf * V[1][1]
+        sv_pitch = avg_col_sf * V[1][1] # SF_col * V_pitch
         sv_z = avg_col_sf * V[2][0]
-        sv_yaw = avg_col_sf * V[2][1]
+        sv_yaw = avg_row_sf * V[2][1] # SF_row * V_yaw
         SV = np.array([[sv_x, sv_roll], [sv_y, sv_pitch], [sv_z, sv_yaw]])
         SV_dict =  {
             'Timestamp': data_set[-1].timestamp.isoformat(),

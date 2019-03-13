@@ -7,6 +7,7 @@ from typing import Dict, List
 from .sv_data_row import SpatialVelocityDataRow
 from .vector_util import get_transformation_matrix_3D
 from scipy.signal import welch
+# from matplotlib import pyplot as plt
 
 
 #:obj:`np.array` Standard world coordinate axises
@@ -57,7 +58,7 @@ def get_rotation_speeds(sv_data_rows:List[SpatialVelocityDataRow]):
         # print (rot_velocities)
     return np.array(rot_velocities)
 
-def get_avg_row_SF(image, window = 'hanning', nfft = 256):
+def get_avg_row_SF(image, window = 'hann', nfft = 256):
     """ Calculates the SF for each row in image and returns the average spatial frequency
 
         Args:
@@ -87,7 +88,13 @@ def get_avg_row_SF(image, window = 'hanning', nfft = 256):
         # frequencies, using the psd values as weights. 
         mean_f = np.average(f, weights=psd)
         row_frqs.append(mean_f)
+        # plt.semilogy(f,psd)
+        # # plt.ylim([0.5e-3, 1])
+        # plt.xlabel('SF')
+        # plt.ylabel('PSD')
         
+
+
     # Calculate the average frequecy across all rows.
     avg_row_sf = np.average(np.array(row_frqs)) 
     return avg_row_sf

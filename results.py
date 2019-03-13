@@ -68,6 +68,7 @@ def main():
                 print("Exiting...")
                 exit(1)
 
+        summary_dict['COUNT'] = len(result_rows)
         if(len(result_rows) > 1950  or len(result_rows) < 1910):
             warnings.append('Unusual log length')            
 
@@ -79,26 +80,27 @@ def main():
             columns[header] = col
         
         for header in columns: 
-            summary_dict[header + '_SUM'] = np.sum(columns[header])
+            # summary_dict[header + '_SUM'] = np.sum(columns[header])
             summary_dict[header + '_AVG'] = np.average(columns[header])
-            summary_dict[header + '_MIN'] = np.min(columns[header])
-            summary_dict[header + '_MAX'] = np.max(columns[header])
-            summary_dict[header + '_VAR'] = np.var(columns[header])
+            # summary_dict[header + '_MIN'] = np.min(columns[header])
+            # summary_dict[header + '_MAX'] = np.max(columns[header])
+            summary_dict[header + '_STD'] = np.std(columns[header])
         
-        # RECALCULATE SV_PITCH and YAW VALUES
-        sv_pitch = columns['row_avg_SF'] * columns['scene_velocity_yaw']
-        summary_dict['SV_pitch' + '_SUM'] = np.sum(sv_pitch)
-        summary_dict['SV_pitch' + '_AVG'] = np.average(sv_pitch)
-        summary_dict['SV_pitch' + '_MIN'] = np.min(sv_pitch)
-        summary_dict['SV_pitch' + '_MAX'] = np.max(sv_pitch)
-        summary_dict['SV_pitch' + '_VAR'] = np.var(sv_pitch)
+        # RECALCULATE SPATIAL VELOCITY PITCH AND YAW VALUES
 
-        sv_yaw = columns['col_avg_SF'] * columns['scene_velocity_pitch']
-        summary_dict['SV_yaw' + '_SUM'] = np.sum(sv_yaw)
+        sv_pitch = columns['col_avg_SF'] * columns['scene_velocity_pitch']
+        # summary_dict['SV_pitch' + '_SUM'] = np.sum(sv_pitch)
+        summary_dict['SV_pitch' + '_AVG'] = np.average(sv_pitch)
+        # summary_dict['SV_pitch' + '_MIN'] = np.min(sv_pitch)
+        # summary_dict['SV_pitch' + '_MAX'] = np.max(sv_pitch)
+        summary_dict['SV_pitch' + 'STD'] = np.std(sv_pitch)
+
+        sv_yaw = columns['row_avg_SF'] * columns['scene_velocity_yaw']
+        # summary_dict['SV_yaw' + '_SUM'] = np.sum(sv_yaw)
         summary_dict['SV_yaw' + '_AVG'] = np.average(sv_yaw)
-        summary_dict['SV_yaw' + '_MIN'] = np.min(sv_yaw)
-        summary_dict['SV_yaw' + '_MAX'] = np.max(sv_yaw)
-        summary_dict['SV_yaw' + '_VAR'] = np.var(sv_yaw)
+        # summary_dict['SV_yaw' + '_MIN'] = np.min(sv_yaw)
+        # summary_dict['SV_yaw' + '_MAX'] = np.max(sv_yaw)
+        summary_dict['SV_yaw' + '_STD'] = np.std(sv_yaw)
 
         summary_dict['WARNINGS'] = ','.join(warnings)
         summary_rows.append(summary_dict)
@@ -109,8 +111,6 @@ def main():
         writer.writeheader()
         for row in summary_rows:
             writer.writerow(row)
-
-            
 
 if __name__ == "__main__":
     main()
